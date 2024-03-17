@@ -4,6 +4,8 @@ from openai import OpenAI
 import pandas as pd
 import json
 import os
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 
 def format_requirements():
@@ -24,7 +26,7 @@ def ask_gpt():
     # Need of array to save predictions
     predictions = []
     # Iterate through requirements
-    for row in data[:1]:  # --> TODO: Das ':1' beschränkt es auf die erste Zeile
+    for row in data:  # --> TODO: Das '[:1]' beschränkt es auf die erste Zeile
         print("RequirementText: " + row["RequirementText"])
         # Instance of the OpenAI client in order to communicate with GPT
         client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))  # --> TODO: Der Key ist in einer .env Datei (nicht im Repo)
@@ -37,14 +39,25 @@ def ask_gpt():
         )
         print("Answer: " + response.choices[0].message.content)
         # Save prediction row to array
-        predictions.append({"ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.choices[0].message.content})
+        predictions.append({"model": "gpt-4-0125", "ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.choices[0].message.content})
     # Close JSON file
     f.close()
     # Save predictions to JSON file
-    with open("requirements_predictions.json", "w") as fp:
+    with open("requirements_predictions_gpt_4.json", "w") as fp:
         json.dump(predictions, fp)
 
 
+def calculate_confusion_matrix():
+    df = pd.read_json("requirements_predictions_gpt_4.json")
+    y_true = df["RequirementClass"]
+    y_pred = df["PredictionClass"]
+    matrix = confusion_matrix(y_true, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=matrix, display_labels=df.PredictionClass.unique())
+    disp.plot()
+    plt.show()
+
+
 if __name__ == "__main__":
-    format_requirements()
-    ask_gpt()
+    # format_requirements()
+    # ask_gpt()
+    calculate_confusion_matrix()
