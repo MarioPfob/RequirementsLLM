@@ -59,11 +59,11 @@ def ask_gemini():
     # Iterate through requirements
     for row in data:  # --> TODO: Das '[:1]' beschränkt es auf die erste Zeile
         print("RequirementText: " + row["RequirementText"])
-        # Instance of the OpenAI client in order to communicate with GPT
+        # Instance of the Gemini client in order to communicate with the current model
         model = GenerativeModel("gemini-1.0-pro-001")
         chat = model.start_chat()
         response = chat.send_message("Decide the class (choices: F, A, L, LF, MN, O, PE, SC, SE, US, FT, PO) of the following requirement specification. The answer only consists of the class: " + row["RequirementText"])
-        # Ask GPT to classify a single requirement specification
+        # Ask Gemini to classify a single requirement specification
         print("Answer: " + response.text)
         # Save prediction row to array
         predictions.append({"model": "gemini-1.0-pro-001", "ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.text})
@@ -84,11 +84,11 @@ def ask_palm():
     # Iterate through requirements
     for row in data:  # --> TODO: Das '[:1]' beschränkt es auf die erste Zeile
         print("RequirementText: " + row["RequirementText"])
-        # Instance of the OpenAI client in order to communicate with GPT
+        # Instance of the PaLM2 client in order to communicate with the current model
         model = ChatModel.from_pretrained("chat-bison-32k@002")
         chat = model.start_chat()
         response = chat.send_message("Decide the class (choices: F, A, L, LF, MN, O, PE, SC, SE, US, FT, PO) of the following requirement specification. The answer only consists of the class: " + row["RequirementText"])
-        # Ask GPT to classify a single requirement specification
+        # Ask Bison model to classify a single requirement specification
         print("Answer: " + response.text)
         # Save prediction row to array
         predictions.append({"model": "chat-bison-32k@002", "ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.text})
