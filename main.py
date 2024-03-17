@@ -6,6 +6,8 @@ import json
 import os
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+from vertexai.preview.generative_models import GenerativeModel
+from vertexai.language_models import ChatModel
 
 
 def format_requirements():
@@ -47,6 +49,56 @@ def ask_gpt():
         json.dump(predictions, fp)
 
 
+def ask_gemini():
+    # Open json file (filled with requirements)
+    f = open("requirements.json")
+    # Read the file and load them into a list of dicts
+    data = json.load(f)
+    # Need of array to save predictions
+    predictions = []
+    # Iterate through requirements
+    for row in data:  # --> TODO: Das '[:1]' beschränkt es auf die erste Zeile
+        print("RequirementText: " + row["RequirementText"])
+        # Instance of the OpenAI client in order to communicate with GPT
+        model = GenerativeModel("gemini-1.0-pro-001")
+        chat = model.start_chat()
+        response = chat.send_message("Decide the class (choices: F, A, L, LF, MN, O, PE, SC, SE, US, FT, PO) of the following requirement specification. The answer only consists of the class: " + row["RequirementText"])
+        # Ask GPT to classify a single requirement specification
+        print("Answer: " + response.text)
+        # Save prediction row to array
+        predictions.append({"model": "gemini-1.0-pro-001", "ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.text})
+    # Close JSON file
+    f.close()
+    # Save predictions to JSON file
+    with open("requirements_predictions_gemini-1.0-pro-001.json", "w") as fp:
+        json.dump(predictions, fp)
+
+
+def ask_palm():
+    # Open json file (filled with requirements)
+    f = open("requirements.json")
+    # Read the file and load them into a list of dicts
+    data = json.load(f)
+    # Need of array to save predictions
+    predictions = []
+    # Iterate through requirements
+    for row in data:  # --> TODO: Das '[:1]' beschränkt es auf die erste Zeile
+        print("RequirementText: " + row["RequirementText"])
+        # Instance of the OpenAI client in order to communicate with GPT
+        model = ChatModel.from_pretrained("chat-bison-32k@002")
+        chat = model.start_chat()
+        response = chat.send_message("Decide the class (choices: F, A, L, LF, MN, O, PE, SC, SE, US, FT, PO) of the following requirement specification. The answer only consists of the class: " + row["RequirementText"])
+        # Ask GPT to classify a single requirement specification
+        print("Answer: " + response.text)
+        # Save prediction row to array
+        predictions.append({"model": "chat-bison-32k@002", "ProjectID": row["ProjectID"], "RequirementText": row["RequirementText"], "RequirementClass": row["RequirementClass"], "PredictionClass": response.text})
+    # Close JSON file
+    f.close()
+    # Save predictions to JSON file
+    with open("requirements_predictions_chat-bison-32k@002.json", "w") as fp:
+        json.dump(predictions, fp)
+
+
 def calculate_confusion_matrix():
     df = pd.read_json("requirements_predictions_gpt_4.json")
     y_true = df["RequirementClass"]
@@ -60,4 +112,6 @@ def calculate_confusion_matrix():
 if __name__ == "__main__":
     # format_requirements()
     # ask_gpt()
-    calculate_confusion_matrix()
+    # ask_gemini()
+    ask_palm()
+    # calculate_confusion_matrix()
