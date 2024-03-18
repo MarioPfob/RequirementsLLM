@@ -4,7 +4,7 @@ from openai import OpenAI
 import pandas as pd
 import json
 import os
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 import matplotlib.pyplot as plt
 from vertexai.preview.generative_models import GenerativeModel
 from vertexai.language_models import ChatModel
@@ -99,19 +99,29 @@ def ask_palm():
         json.dump(predictions, fp)
 
 
-def calculate_confusion_matrix():
-    df = pd.read_json("requirements_predictions_gpt_4.json")
+def calculate_confusion_matrix(model_name):
+    print(model_name)
+    df = pd.read_json(f"requirements_predictions_{model_name}.json")
+    # df["PredictionClassCorrected"] = df["PredictionClass"].apply(lambda x: "NewClass" if x not in ["F", "A", "L", "LF", "MN", "O", "PE", "SC", "SE", "US", "FT", "PO"] else x)
     y_true = df["RequirementClass"]
     y_pred = df["PredictionClass"]
+    precision, recall, fscore, support = precision_recall_fscore_support(y_true, y_pred)
+    print("precision: {}".format(precision))
+    print("recall: {}".format(recall))
+    print("fscore: {}".format(fscore))
+    print("support: {}".format(support))
     matrix = confusion_matrix(y_true, y_pred)
-    disp = ConfusionMatrixDisplay(confusion_matrix=matrix, display_labels=df.PredictionClass.unique())
+    disp = ConfusionMatrixDisplay(confusion_matrix=matrix, display_labels=pd.concat([df["RequirementClass"], df["PredictionClass"]]).unique())
     disp.plot()
     plt.show()
+    print("------")
 
 
 if __name__ == "__main__":
     # format_requirements()
     # ask_gpt()
     # ask_gemini()
-    ask_palm()
-    # calculate_confusion_matrix()
+    # ask_palm()
+    calculate_confusion_matrix("gpt_4")
+    calculate_confusion_matrix("chat-bison-32k@002")
+    calculate_confusion_matrix("gemini-1.0-pro-001")
